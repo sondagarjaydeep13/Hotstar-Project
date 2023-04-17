@@ -7,15 +7,15 @@ const app = express();
 const hbs = require("hbs");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
-const hostarrouter = require("../router/hostarrouter");
-
+const userrouter = require("../router/userrouter");
+const a_router = require("../router/adminrouter");
 const port = process.env.port;
 const dburl = process.env.dburl;
 //***************Path************* */
 const viewpath = path.join(__dirname, "../templetes/view");
 const partialpath = path.join(__dirname, "../templetes/partial");
-const csspath = path.join(__dirname, "../templetes/css");
-const publicpath = path.join(__dirname, "./public");
+
+const publicpath = path.join(__dirname, "../public");
 //***********Use****************** */
 
 app.set("view engine", "hbs");
@@ -24,7 +24,7 @@ hbs.registerPartials(partialpath);
 app.use(express.static(publicpath));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use("/", hostarrouter);
+app.use(express.json());
 
 //*************port & database************** */
 app.listen(port, () => {
@@ -38,3 +38,6 @@ mongoose
   .catch((error) => {
     console.log(error);
   });
+
+app.use("/", userrouter);
+app.use("/", a_router);

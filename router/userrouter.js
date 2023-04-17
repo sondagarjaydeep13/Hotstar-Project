@@ -7,8 +7,13 @@ const auth = require("../middleware/auth");
 router.get("/", (req, resp) => {
   resp.render("hostar", { msglogin: "Login" });
 });
-router.get("/home", auth, (req, resp) => {
-  resp.render("hostar");
+router.get("/home", async (req, resp) => {
+  const Token = await req.cookies.jwt;
+  if (Token) {
+    resp.render("hostar", { msglogout: "Logout" });
+  } else {
+    resp.render("hostar", { msglogin: "Login" });
+  }
 });
 router.get("/login", (req, resp) => {
   resp.render("login");
@@ -17,8 +22,12 @@ router.get("/registration", (req, resp) => {
   resp.render("registration");
 });
 //************************TV**************************** */
-router.get("/tv", auth, (req, resp) => {
+router.get("/tv", (req, resp) => {
   resp.render("tv");
+});
+//************************ Movie*************************/
+router.get("/movie", auth, (req, res) => {
+  res.render("movie");
 });
 //**************************Add user******************** */
 router.post("/adduser", async (req, resp) => {
@@ -50,15 +59,17 @@ router.post("/adduser", async (req, resp) => {
 
 //***************Login User***************************** */
 router.post("/loginuser", async (req, resp) => {
+  const email = req.body.email;
+  const pass = req.body.pass;
+
   try {
-    const email = req.body.email;
-    const pass = req.body.pass;
     const userdata = await User.findOne({ email: email });
     const isverify = await bcrypt.compare(pass, userdata.pass);
-    const token = await jwt.sign({ _id: userdata._id }, process.env.SKEY);
+
+    const Token = await userdata.genrateToken();
 
     if (isverify) {
-      resp.cookie("jwt", token);
+      resp.cookie("jwt", Token);
       resp.render("hostar", {
         udata: "Welcome" + " " + userdata.uname,
         msglogout: "Logout",
@@ -73,9 +84,18 @@ router.post("/loginuser", async (req, resp) => {
   }
 });
 //**************** Logout*********************************** */
-router.get("/logout", (req, resp) => {
-  resp.clearCookie("jwt");
-  resp.render("hostar", { msglogin: "Login" });
+router.get("/logout", auth, async (req, resp) => {
+  const token = req.token;
+  const user = req.user;
+  try {
+    user.Tokens = user.Tokens.filter((e) => {
+      return e.token != token;
+    });
+    await user.save();
+
+    resp.clearCookie("jwt");
+    resp.render("hostar", { msglogin: "Login" });
+  } catch (error) {}
 });
 //***********************Edit user**************************** */
 router.get("/edit", async (req, resp) => {

@@ -7,6 +7,7 @@ const auth = async (req, resp, next) => {
     if (isverify) {
       const userdata = await User.findOne({ _id: isverify._id });
       req.user = userdata;
+      req.token = token;
       next();
     } else {
       resp.render("login", { alert: "Please login first...!!!!" });
